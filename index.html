@@ -725,12 +725,18 @@
                                 <i data-lucide="pen-line" width="20"></i>
                                 <input type="color" class="absolute opacity-0 w-0 h-0" onchange="updateColManual(${i}, this.value)">
                             </label>
+
+                            <button class="icon-btn" onclick="generateVariants(${i})" title="Ver Gradientes desta cor">
+                                <i data-lucide="grid-2x2" width="20"></i>
+                            </button>
+
                             <button class="icon-btn lock-btn" onclick="toggleLock(${i})" title="Travar">
                                 <i data-lucide="unlock" width="20" class="icon-lock"></i>
                             </button>
                         </div>
                         <h2 class="hex-text" onclick="copyText('${i}')">#FFFFFF</h2>
                     </div>
+                    
                 `;
                 paletteContainer.appendChild(col);
             }
@@ -1198,6 +1204,34 @@
         updateShadowUI();
         updateBorderUI();
 
+
+        function generateVariants(baseIndex) {
+            const base = paletteColors[baseIndex];
+            const hsl = hexToHSL(base);
+            
+            // Travar a base
+            if(!lockedState[baseIndex]) toggleLock(baseIndex);
+
+            // Gerar paleta baseada na cor (Monocromático + Análogo)
+            let variants = [];
+            variants.push(HSLToHex(hsl.h, Math.max(0, hsl.s-20), Math.min(95, hsl.l+30))); // Light
+            variants.push(HSLToHex(hsl.h, hsl.s, Math.min(90, hsl.l+15))); // Mid-Light
+            variants.push(base); // Base
+            variants.push(HSLToHex((hsl.h+30)%360, hsl.s, hsl.l)); // Analogous
+            variants.push(HSLToHex(hsl.h, Math.min(100, hsl.s+10), Math.max(5, hsl.l-30))); // Dark
+
+            // Distribuir
+            let vIdx = 0;
+            for(let i=0; i<5; i++){
+                if(i === baseIndex) continue; // Pula base
+                if(vIdx === 2) vIdx++; // Pula base no array de variantes
+                
+                if(!lockedState[i]) {
+                    updateColUI(i, variants[vIdx]);
+                    vIdx++;
+                }
+            }
+        }
     </script>
 </body>
 </html>
