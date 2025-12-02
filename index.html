@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- Markdown parser for analysis -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
             --color-0: #ffffff;
@@ -41,7 +41,7 @@
             height: calc(100vh - 60px);
             position: relative;
             display: none;
-            overflow-y: auto; /* Permitir scroll nas novas ferramentas */
+            overflow-y: auto;
         }
         .view-container.active {
             display: flex;
@@ -147,13 +147,14 @@
             padding: 25px;
             border-radius: 16px;
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.2);
             transform: scale(0.95);
             transition: transform 0.2s ease;
             max-height: 85vh;
             overflow-y: auto;
         }
+        .modal-content.large { max-width: 900px; }
         .modal-overlay.open .modal-content {
             transform: scale(1);
         }
@@ -170,28 +171,7 @@
             overflow-x: auto;
         }
 
-        /* --- GRADIENT VIEW --- */
-        #gradient-preview {
-            width: 100%; height: 100%;
-            display: flex; align-items: center; justify-content: center;
-            position: relative;
-        }
-        .gradient-controls {
-            background: white; padding: 20px; border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            display: flex; flex-direction: column; gap: 15px;
-            min-width: 300px; z-index: 20;
-        }
-        .color-dot {
-            width: 40px; height: 40px; border-radius: 50%;
-            border: 2px solid #ddd; cursor: pointer; position: relative; overflow: hidden;
-        }
-        .color-dot input {
-            position: absolute; top: -10px; left: -10px; width: 200%; height: 200%; cursor: pointer; opacity: 0;
-        }
-        .color-picker-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-
-        /* --- NEW GENERATORS CSS (SHADOW & BORDER) --- */
+        /* --- GENERATOR VIEWS --- */
         .generator-container {
             width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
             background: #f8f9fa; padding: 20px;
@@ -220,8 +200,11 @@
         input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); }
 
         .preview-box { width: 150px; height: 150px; background: #4f46e5; border-radius: 12px; transition: all 0.2s ease; }
+        .gradient-preview-box { width: 100%; height: 100%; }
+        .color-dot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ddd; cursor: pointer; position: relative; overflow: hidden; }
+        .color-dot input { position: absolute; top: -10px; left: -10px; width: 200%; height: 200%; cursor: pointer; opacity: 0; }
+        .color-picker-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 
-        /* Styles for Nav Buttons */
         .nav-btn {
             padding: 6px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; cursor: pointer;
         }
@@ -229,8 +212,6 @@
         .nav-btn.inactive { color: #6b7280; }
         .nav-btn.inactive:hover { color: #111827; background-color: rgba(0,0,0,0.05); }
 
-
-        /* Toast */
         .msg-toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
             background: #111; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 600;
@@ -238,7 +219,6 @@
         }
         .msg-toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        /* AI Loader */
         .ai-loader {
             width: 20px; height: 20px; border: 3px solid #E5E7EB;
             border-bottom-color: #6366F1; border-radius: 50%; display: inline-block;
@@ -246,12 +226,18 @@
         }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Markdown Styles for Analysis */
-        .analysis-content h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: #1f2937; }
-        .analysis-content p { margin-bottom: 0.75rem; color: #4b5563; line-height: 1.5; }
-        .analysis-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
-        .analysis-content li { margin-bottom: 0.25rem; }
-        .analysis-content strong { color: #111827; font-weight: 600; }
+        /* Styles for UI Generator Preview */
+        #ui-preview-container {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #f9fafb;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
 
         @media(max-width: 1024px) {
             .generator-card { flex-direction: column; height: auto; align-items: stretch; }
@@ -265,7 +251,6 @@
             .col { flex-direction: row; justify-content: space-between; padding: 0 20px; }
             .col-info { flex-direction: row-reverse; width: 100%; justify-content: space-between; }
             .role-badge { margin-bottom: 0; margin-right: 10px; }
-            
             nav { overflow-x: auto; gap: 10px; }
             .nav-group { min-width: max-content; }
         }
@@ -277,7 +262,7 @@
     <nav>
         <div class="flex items-center gap-2 mr-4">
             <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-pink-500 rounded-lg shadow-sm flex-shrink-0"></div>
-            <h1 class="font-bold text-xl tracking-tight text-gray-800 hidden md:block">Color Matcher</h1>
+            <h1 class="font-bold text-xl tracking-tight text-gray-800 hidden lg:block">Color Matcher</h1>
         </div>
 
         <div class="flex bg-gray-100 p-1 rounded-lg nav-group mx-auto">
@@ -288,16 +273,21 @@
         </div>
 
         <div class="flex gap-2 items-center ml-4">
-            <!-- Botão Analisar -->
-            <button onclick="analyzePalette()" class="flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition" title="Consultor de Design IA">
-                <i data-lucide="scan-eye" width="16"></i>
-                <span class="hidden md:inline">Analisar</span>
+            <!-- Botão UI Mágica (NOVO) -->
+            <button onclick="openUIModal()" class="flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-md transition shadow-sm animate-pulse-slow" title="Gerar Interface com estas cores">
+                <i data-lucide="layout-template" width="16"></i>
+                <span class="hidden md:inline">UI Mágica</span>
             </button>
 
             <!-- Botão IA -->
-            <button onclick="openAIModal()" class="flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-md transition shadow-sm animate-pulse-slow" title="Gerar com IA">
+            <button onclick="openAIModal()" class="flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-md transition shadow-sm animate-pulse-slow" title="Gerar Cores com IA">
                 <i data-lucide="sparkles" width="16"></i>
                 <span class="hidden md:inline">IA</span>
+            </button>
+
+            <!-- Botão Analisar -->
+            <button onclick="analyzePalette()" class="flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition" title="Consultor de Design IA">
+                <i data-lucide="scan-eye" width="16"></i>
             </button>
 
             <!-- Botão Inverter -->
@@ -358,7 +348,7 @@
         </div>
     </div>
 
-    <!-- SHADOW VIEW (NOVO) -->
+    <!-- SHADOW VIEW -->
     <div id="shadow-view" class="view-container">
         <div class="generator-container">
             <div class="generator-card">
@@ -407,7 +397,7 @@
         </div>
     </div>
 
-    <!-- BORDER VIEW (NOVO) -->
+    <!-- BORDER VIEW -->
     <div id="border-view" class="view-container">
         <div class="generator-container">
             <div class="generator-card">
@@ -526,6 +516,38 @@
             </div>
 
             <p id="ai-error" class="text-red-500 text-xs mt-2 hidden text-center"></p>
+        </div>
+    </div>
+
+    <!-- MODAL UI MAGIC GENERATOR -->
+    <div id="ui-modal" class="modal-overlay">
+        <div class="modal-content large">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <i data-lucide="layout-template" class="text-emerald-600"></i>
+                    Visualizador de UI Mágica
+                </h3>
+                <button onclick="closeUIModal()" class="p-1 hover:bg-gray-100 rounded"><i data-lucide="x" width="20"></i></button>
+            </div>
+            
+            <p class="text-sm text-gray-500 mb-4">Gere um componente de interface em tempo real usando a sua paleta atual.</p>
+
+            <div class="flex gap-2 mb-4">
+                <select id="ui-component-type" class="p-2 border border-gray-300 rounded-md text-sm flex-1">
+                    <option value="Hero Section">Hero Section (Entrada)</option>
+                    <option value="Pricing Table">Tabela de Preços</option>
+                    <option value="Profile Card">Cartão de Perfil</option>
+                    <option value="Newsletter Signup">Formulário Newsletter</option>
+                    <option value="Feature List">Lista de Funcionalidades</option>
+                </select>
+                <button onclick="generateUIComponent()" id="ui-generate-btn" class="px-4 py-2 bg-emerald-600 text-white rounded-md text-sm font-bold hover:bg-emerald-700 transition">
+                    Gerar UI
+                </button>
+            </div>
+
+            <div id="ui-preview-container">
+                <p class="text-gray-400 text-sm">Selecione um componente e clique em "Gerar UI" para ver a magia.</p>
+            </div>
         </div>
     </div>
 
@@ -767,7 +789,6 @@
 
         // --- 5. LÓGICA DO GEMINI API ---
 
-        // Configuração dos Botões e Tabs
         function switchAiTab(tab) {
             const tabText = document.getElementById('tab-text');
             const tabImage = document.getElementById('tab-image');
@@ -799,8 +820,6 @@
                     const img = document.getElementById('image-preview');
                     img.src = e.target.result;
                     document.getElementById('image-preview-container').classList.remove('hidden');
-                    
-                    // Remove prefix (data:image/png;base64,)
                     uploadedImageBase64 = e.target.result.split(',')[1];
                     document.getElementById('ai-generate-btn-image').disabled = false;
                 }
@@ -811,15 +830,12 @@
         async function generateAIColors(mode) {
             const errorMsg = document.getElementById('ai-error');
             const btn = document.getElementById(mode === 'text' ? 'ai-generate-btn-text' : 'ai-generate-btn-image');
-            
-            // Setup Payload
             let contents = [];
             
             if (mode === 'text') {
                 const promptInput = document.getElementById('ai-prompt').value;
                 if (!promptInput.trim()) return;
                 
-                // Construct prompt with locks
                 const lockedColors = paletteColors.map((c, i) => lockedState[i] ? {index: i, color: c} : null).filter(x => x);
                 let lockedContext = "";
                 if (lockedColors.length > 0) {
@@ -844,7 +860,6 @@
                 }];
             }
 
-            // UI Loading
             const originalBtnContent = btn.innerHTML;
             btn.innerHTML = '<span class="ai-loader"></span> Gerando...';
             btn.disabled = true;
@@ -867,13 +882,7 @@
                 if (Array.isArray(aiColors) && aiColors.length === 5) {
                     const roles = assignRoles(aiColors);
                     aiColors.forEach((color, idx) => {
-                        // Apply colors (respecting locks only in text mode theoretically, but forced here)
-                        if(!lockedState[idx] || mode === 'image') {
-                             updateColUI(idx, color.toUpperCase(), roles[idx]);
-                        } else {
-                             // Force update visual even if locked to match API logic if needed
-                             updateColUI(idx, color.toUpperCase(), roles[idx]);
-                        }
+                        updateColUI(idx, color.toUpperCase(), roles[idx]);
                     });
                     
                     updateRootVariables(aiColors);
@@ -918,10 +927,8 @@
 
                 const data = await response.json();
                 const markdownText = data.candidates[0].content.parts[0].text;
-                
                 const resultDiv = document.getElementById('analysis-result');
                 resultDiv.innerHTML = marked.parse(markdownText);
-                
                 document.getElementById('analysis-loading').classList.add('hidden');
                 resultDiv.classList.remove('hidden');
 
@@ -932,26 +939,63 @@
             }
         }
 
+        async function generateUIComponent() {
+            const btn = document.getElementById('ui-generate-btn');
+            const preview = document.getElementById('ui-preview-container');
+            const componentType = document.getElementById('ui-component-type').value;
+            
+            const originalBtn = btn.innerHTML;
+            btn.innerHTML = '<span class="ai-loader"></span> Gerando...';
+            btn.disabled = true;
+            preview.innerHTML = '<div class="text-center"><span class="ai-loader mb-2"></span><p class="text-sm text-gray-500">A IA está a desenhar a sua interface...</p></div>';
+
+            try {
+                const prompt = `
+                    Create a modern HTML UI component of type '${componentType}' using Tailwind CSS classes.
+                    Use strictly the following color palette:
+                    - Color 0 (Background/Light): ${paletteColors[0]}
+                    - Color 1: ${paletteColors[1]}
+                    - Color 2: ${paletteColors[2]}
+                    - Color 3: ${paletteColors[3]}
+                    - Color 4 (Text/Dark/Accent): ${paletteColors[4]}
+                    
+                    Return ONLY raw HTML code (no markdown blocks, no explanation). Ensure it looks beautiful and uses the colors for background, text, borders, buttons etc appropriately to create good contrast.
+                `;
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const data = await response.json();
+                const html = data.candidates[0].content.parts[0].text.replace(/```html/g, '').replace(/```/g, '');
+                
+                preview.innerHTML = html;
+
+            } catch(err) {
+                console.error(err);
+                preview.innerHTML = '<p class="text-red-500 text-sm">Erro ao gerar UI. Tente novamente.</p>';
+            } finally {
+                btn.innerHTML = originalBtn;
+                btn.disabled = false;
+            }
+        }
+
         // --- 6. UTILITÁRIOS GERAIS ---
         function switchView(viewName) {
             currentView = viewName;
-            
             document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
-            // Remove active style from all
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active');
                 btn.classList.add('inactive');
             });
-            
             document.getElementById(`${viewName}-view`).classList.add('active');
-            
-            // Add active style to current
             const activeBtn = document.getElementById(`btn-${viewName}`);
             if(activeBtn) {
                 activeBtn.classList.remove('inactive');
                 activeBtn.classList.add('active');
             }
-            
             if(viewName === 'shadow') updateShadowUI();
             if(viewName === 'border') updateBorderUI();
         }
@@ -999,6 +1043,9 @@
         function closeAIModal() { document.getElementById('ai-modal').classList.remove('open'); }
         
         function closeAnalysisModal() { document.getElementById('analysis-modal').classList.remove('open'); }
+
+        function openUIModal() { document.getElementById('ui-modal').classList.add('open'); }
+        function closeUIModal() { document.getElementById('ui-modal').classList.remove('open'); }
 
         // Gradient
         function initGradient() { randomGradient(); }
@@ -1110,7 +1157,8 @@
 
         // Eventos
         document.addEventListener('keydown', (e) => {
-            if(e.code === 'Space' && !document.getElementById('ai-modal').classList.contains('open')) {
+            const openModals = document.querySelectorAll('.modal-overlay.open');
+            if(e.code === 'Space' && openModals.length === 0) {
                 e.preventDefault();
                 if(currentView === 'palette') generatePalette();
                 if(currentView === 'gradient') randomGradient();
@@ -1119,6 +1167,7 @@
         document.getElementById('css-modal').addEventListener('click', (e) => { if(e.target === document.getElementById('css-modal')) closeCSSModal(); });
         document.getElementById('ai-modal').addEventListener('click', (e) => { if(e.target === document.getElementById('ai-modal')) closeAIModal(); });
         document.getElementById('analysis-modal').addEventListener('click', (e) => { if(e.target === document.getElementById('analysis-modal')) closeAnalysisModal(); });
+        document.getElementById('ui-modal').addEventListener('click', (e) => { if(e.target === document.getElementById('ui-modal')) closeUIModal(); });
 
         // Start
         initPalette();
