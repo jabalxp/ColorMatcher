@@ -382,6 +382,11 @@
                 <i data-lucide="scan-eye" width="16"></i>
             </button>
 
+            <!-- Botão Inverter (RESTAURADO) -->
+            <button onclick="invertPalette()" class="flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded-md transition border border-gray-200" title="Inverter (Claro/Escuro)">
+                <i data-lucide="sun-moon" width="16"></i>
+            </button>
+
              <button onclick="openCSSModal()" class="flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded-md transition border border-gray-200" title="Ver CSS">
                 <i data-lucide="code" width="16"></i>
             </button>
@@ -840,6 +845,18 @@
             
             newColors.forEach((color, idx) => updateColUI(idx, color, roles[idx]));
             updateRootVariables(newColors);
+        }
+
+        function invertPalette() {
+            const newColors = paletteColors.map((hex) => {
+                const hsl = hexToHSL(hex);
+                const newL = 100 - hsl.l;
+                return HSLToHex(hsl.h, hsl.s, newL);
+            });
+            const roles = assignRoles(newColors);
+            newColors.forEach((color, idx) => updateColUI(idx, color, roles[idx]));
+            updateRootVariables(newColors);
+            showToast("Tema invertido!");
         }
 
         function updateColUI(index, color, role) {
