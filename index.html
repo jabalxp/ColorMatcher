@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Color Matcher Pro - Local Edition</title>
+    <title>Color Matcher Pro - Ultimate Edition V2</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Merriweather:wght@300;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <style id="dynamic-styles"></style>
+
     <style>
         :root {
             --color-0: #ffffff;
@@ -215,7 +218,6 @@
         input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); }
 
         .preview-box { width: 150px; height: 150px; background: #4f46e5; border-radius: 12px; transition: all 0.2s ease; }
-        .gradient-preview-box { width: 100%; height: 100%; }
         
         /* --- GRADIENT VIEW --- */
         #gradient-preview {
@@ -245,6 +247,7 @@
 
         .nav-btn {
             padding: 6px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; cursor: pointer;
+            white-space: nowrap;
         }
         .nav-btn.active { background-color: white; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .nav-btn.inactive { color: #6b7280; }
@@ -256,13 +259,6 @@
             opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 100;
         }
         .msg-toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        .ai-loader {
-            width: 20px; height: 20px; border: 3px solid #E5E7EB;
-            border-bottom-color: #6366F1; border-radius: 50%; display: inline-block;
-            animation: rotation 1s linear infinite;
-        }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* Styles for UI Generator Preview */
         #ui-preview-container {
@@ -305,6 +301,68 @@
         .vision-btn:hover { background: #f3f4f6; }
         .vision-btn.active { background: #e0e7ff; color: #4338ca; font-weight: 600; }
 
+        /* --- SCROLLBAR CUSTOMIZER --- */
+        #scrollbar-target {
+            width: 100%;
+            height: 100%;
+            overflow-y: scroll;
+            padding: 20px;
+            background: white;
+            color: #333;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        /* --- CONTEXT MENU STYLES --- */
+        .context-menu-base {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 8px 0;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #eee;
+        }
+        .context-item {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.15s;
+        }
+        .context-divider { height: 1px; background: #eee; margin: 4px 0; opacity: 0.5; }
+
+        .custom-context-menu {
+            position: absolute;
+            display: none;
+            z-index: 999;
+            animation: fadeIn 0.1s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* --- TYPOGRAPHY PREVIEW --- */
+        #typo-preview-area {
+            overflow-y: auto; padding: 40px;
+            display: flex; flex-direction: column; gap: 20px; align-items: flex-start; justify-content: flex-start;
+        }
+
+        /* --- TRANSFORM PREVIEW --- */
+        .transform-box-wrapper {
+            width: 200px; height: 200px; border: 2px dashed #e5e7eb; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #transform-box {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: bold; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
         @media(max-width: 1024px) {
             .generator-card { flex-direction: column; height: auto; align-items: stretch; }
             .preview-area { height: 300px; }
@@ -324,7 +382,6 @@
 </head>
 <body>
 
-    <!-- SVG FILTERS FOR COLOR BLINDNESS (HIDDEN) -->
     <svg style="display: none;">
         <defs>
             <filter id="protanopia-filter"><feColorMatrix type="matrix" values="0.567, 0.433, 0, 0, 0 0.558, 0.442, 0, 0, 0 0, 0.242, 0.758, 0, 0 0, 0, 0, 1, 0"/></filter>
@@ -334,7 +391,19 @@
         </defs>
     </svg>
 
-    <!-- NAV BAR -->
+    <div id="custom-context-menu" class="custom-context-menu context-menu-base">
+        <div class="context-item" onclick="copyScrollbarCSS()">
+            <i data-lucide="copy" width="16"></i> Copiar CSS
+        </div>
+        <div class="context-item" onclick="randomizeScrollbar()">
+            <i data-lucide="shuffle" width="16"></i> Aleatório
+        </div>
+        <div class="context-divider"></div>
+        <div class="context-item" onclick="resetScrollbar()">
+            <i data-lucide="rotate-ccw" width="16"></i> Resetar
+        </div>
+    </div>
+
     <nav>
         <div class="flex items-center gap-2 mr-4">
             <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-pink-500 rounded-lg shadow-sm flex-shrink-0"></div>
@@ -346,10 +415,13 @@
             <button onclick="switchView('gradient')" id="btn-gradient" class="nav-btn inactive">Gradiente</button>
             <button onclick="switchView('shadow')" id="btn-shadow" class="nav-btn inactive">Sombra</button>
             <button onclick="switchView('border')" id="btn-border" class="nav-btn inactive">Borda</button>
+            <button onclick="switchView('typography')" id="btn-typography" class="nav-btn inactive">Tipografia</button>
+            <button onclick="switchView('transform')" id="btn-transform" class="nav-btn inactive">Transform</button>
+            <button onclick="switchView('scrollbar')" id="btn-scrollbar" class="nav-btn inactive">Scroll</button>
+            <button onclick="switchView('menu')" id="btn-menu" class="nav-btn inactive">Menu</button>
         </div>
 
         <div class="flex gap-2 items-center ml-4">
-            <!-- Botão Vision Simulator (MANTIDO) -->
             <div class="relative">
                 <button onclick="toggleVisionMenu()" class="flex items-center justify-center w-8 h-8 text-gray-600 hover:bg-gray-100 rounded-md transition" title="Simulador de Visão">
                     <i data-lucide="eye" width="18"></i>
@@ -365,24 +437,20 @@
 
             <div class="h-6 w-px bg-gray-200 mx-1"></div>
 
-            <!-- Botão UI Mágica -->
             <button onclick="openUIModal()" class="flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-md transition shadow-sm animate-pulse-slow" title="Gerar Interface">
                 <i data-lucide="layout-template" width="16"></i>
                 <span class="hidden md:inline">UI</span>
             </button>
 
-            <!-- Botão Smart Gen -->
             <button onclick="openAIModal()" class="flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-md transition shadow-sm animate-pulse-slow" title="Gerar Cores Inteligentes">
                 <i data-lucide="sparkles" width="16"></i>
                 <span class="hidden md:inline">Smart</span>
             </button>
 
-            <!-- Menu Extras -->
             <button onclick="analyzePalette()" class="flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition" title="Análise">
                 <i data-lucide="scan-eye" width="16"></i>
             </button>
 
-            <!-- Botão Inverter (RESTAURADO) -->
             <button onclick="invertPalette()" class="flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded-md transition border border-gray-200" title="Inverter (Claro/Escuro)">
                 <i data-lucide="sun-moon" width="16"></i>
             </button>
@@ -393,12 +461,8 @@
         </div>
     </nav>
 
-    <!-- PALETTE VIEW -->
-    <div id="palette-view" class="view-container active w-full">
-        <!-- Colunas geradas via JS -->
-    </div>
+    <div id="palette-view" class="view-container active w-full"></div>
 
-    <!-- GRADIENT VIEW -->
     <div id="gradient-view" class="view-container w-full">
         <div id="gradient-preview">
             <div class="gradient-controls">
@@ -439,7 +503,6 @@
         </div>
     </div>
 
-    <!-- SHADOW VIEW -->
     <div id="shadow-view" class="view-container">
         <div class="generator-container">
             <div class="generator-card">
@@ -488,7 +551,6 @@
         </div>
     </div>
 
-    <!-- BORDER VIEW -->
     <div id="border-view" class="view-container">
         <div class="generator-container">
             <div class="generator-card">
@@ -499,38 +561,21 @@
                 </div>
                 <div class="controls-area">
                     <h3 class="text-xl font-bold text-gray-800 mb-2">Borda & Radius</h3>
-
                     <div class="control-group">
                         <label>Todas as Bordas (Radius): <span id="border-radius-val">12px</span></label>
                         <input type="range" id="border-radius" min="0" max="100" value="12" oninput="updateBorderUI()">
                     </div>
-
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="control-group">
-                            <label>Superior Esq.</label>
-                            <input type="range" id="br-tl" min="0" max="100" value="12" oninput="updateBorderUI(true)">
-                        </div>
-                        <div class="control-group">
-                            <label>Superior Dir.</label>
-                            <input type="range" id="br-tr" min="0" max="100" value="12" oninput="updateBorderUI(true)">
-                        </div>
-                        <div class="control-group">
-                            <label>Inferior Esq.</label>
-                            <input type="range" id="br-bl" min="0" max="100" value="12" oninput="updateBorderUI(true)">
-                        </div>
-                        <div class="control-group">
-                            <label>Inferior Dir.</label>
-                            <input type="range" id="br-br" min="0" max="100" value="12" oninput="updateBorderUI(true)">
-                        </div>
+                        <div class="control-group"><label>Sup. Esq.</label><input type="range" id="br-tl" min="0" max="100" value="12" oninput="updateBorderUI(true)"></div>
+                        <div class="control-group"><label>Sup. Dir.</label><input type="range" id="br-tr" min="0" max="100" value="12" oninput="updateBorderUI(true)"></div>
+                        <div class="control-group"><label>Inf. Esq.</label><input type="range" id="br-bl" min="0" max="100" value="12" oninput="updateBorderUI(true)"></div>
+                        <div class="control-group"><label>Inf. Dir.</label><input type="range" id="br-br" min="0" max="100" value="12" oninput="updateBorderUI(true)"></div>
                     </div>
-
                     <div class="h-px bg-gray-200 my-2"></div>
-
                     <div class="control-group">
                         <label>Espessura: <span id="border-width-val">2px</span></label>
                         <input type="range" id="border-width" min="0" max="20" value="2" oninput="updateBorderUI()">
                     </div>
-
                     <div class="flex items-center gap-2 mt-2">
                         <select id="border-style" class="flex-1 p-2 border border-gray-300 rounded-md text-sm" onchange="updateBorderUI()">
                             <option value="solid">Solid</option>
@@ -542,7 +587,6 @@
                             <input type="color" id="border-color" value="#4f46e5" oninput="updateBorderUI()">
                         </div>
                     </div>
-
                     <button onclick="copyBorderCSS()" class="mt-auto w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition active:scale-95">
                         Copiar CSS
                     </button>
@@ -551,20 +595,285 @@
         </div>
     </div>
 
-    <!-- MODAL CSS OUTPUT -->
+    <div id="typography-view" class="view-container">
+        <div class="generator-container">
+            <div class="generator-card">
+                <div class="preview-area" id="typo-preview-area">
+                    <h1 id="typo-h1" class="text-4xl text-gray-900 mb-2">A Raposa Rápida</h1>
+                    <p id="typo-p" class="text-gray-600">A rápida raposa marrom pula sobre o cão preguiçoso. A tipografia define o ritmo da leitura e a personalidade do texto. Ajuste os controles ao lado para encontrar o par perfeito.</p>
+                </div>
+                <div class="controls-area">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Tipografia</h3>
+
+                    <div class="mb-4">
+                        <h4 class="font-bold text-xs text-indigo-600 uppercase mb-2">Título (H1)</h4>
+                        <div class="control-group mb-2">
+                            <select id="typo-font-h1" class="w-full p-2 border rounded text-sm" onchange="updateTypographyUI()">
+                                <option value="'Inter', sans-serif">Inter (Sans)</option>
+                                <option value="'Merriweather', serif">Merriweather (Serif)</option>
+                                <option value="'Fira Code', monospace">Fira Code (Mono)</option>
+                                <option value="Arial, sans-serif">Arial</option>
+                                <option value="Times New Roman, serif">Times New Roman</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Tamanho: <span id="typo-size-h1-val">36px</span></label>
+                            <input type="range" id="typo-size-h1" min="12" max="72" value="36" oninput="updateTypographyUI()">
+                        </div>
+                        <div class="control-group">
+                            <label>Peso: <span id="typo-weight-h1-val">700</span></label>
+                            <input type="range" id="typo-weight-h1" min="100" max="900" step="100" value="700" oninput="updateTypographyUI()">
+                        </div>
+                         <div class="control-group">
+                            <label>Espaçamento: <span id="typo-space-h1-val">0px</span></label>
+                            <input type="range" id="typo-space-h1" min="-2" max="10" step="0.5" value="0" oninput="updateTypographyUI()">
+                        </div>
+                    </div>
+
+                    <div class="h-px bg-gray-200 my-2"></div>
+
+                    <div class="mb-4">
+                        <h4 class="font-bold text-xs text-indigo-600 uppercase mb-2">Corpo (P)</h4>
+                        <div class="control-group mb-2">
+                            <select id="typo-font-p" class="w-full p-2 border rounded text-sm" onchange="updateTypographyUI()">
+                                <option value="'Inter', sans-serif">Inter (Sans)</option>
+                                <option value="'Merriweather', serif">Merriweather (Serif)</option>
+                                <option value="'Fira Code', monospace">Fira Code (Mono)</option>
+                                <option value="Arial, sans-serif">Arial</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Tamanho: <span id="typo-size-p-val">16px</span></label>
+                            <input type="range" id="typo-size-p" min="10" max="32" value="16" oninput="updateTypographyUI()">
+                        </div>
+                         <div class="control-group">
+                            <label>Linha (Height): <span id="typo-line-p-val">1.5</span></label>
+                            <input type="range" id="typo-line-p" min="1" max="2.5" step="0.1" value="1.5" oninput="updateTypographyUI()">
+                        </div>
+                    </div>
+
+                    <button onclick="copyTypographyCSS()" class="mt-auto w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition active:scale-95">
+                        Copiar CSS
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="transform-view" class="view-container">
+        <div class="generator-container">
+            <div class="generator-card">
+                <div class="preview-area">
+                    <div class="transform-box-wrapper">
+                        <div id="transform-box">Passe o Mouse</div>
+                    </div>
+                </div>
+                <div class="controls-area">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Transform & Transition</h3>
+                    <p class="text-xs text-gray-500 mb-4">Configure o estado de "Hover" (ao passar o mouse).</p>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="control-group">
+                            <label>Rotate (Deg)</label>
+                            <input type="range" id="trans-rotate" min="-180" max="180" value="0" oninput="updateTransformUI()">
+                        </div>
+                        <div class="control-group">
+                            <label>Scale (Zoom)</label>
+                            <input type="range" id="trans-scale" min="0.5" max="2" step="0.1" value="1" oninput="updateTransformUI()">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mt-2">
+                        <div class="control-group">
+                            <label>Translate X</label>
+                            <input type="range" id="trans-x" min="-100" max="100" value="0" oninput="updateTransformUI()">
+                        </div>
+                        <div class="control-group">
+                            <label>Translate Y</label>
+                            <input type="range" id="trans-y" min="-100" max="100" value="0" oninput="updateTransformUI()">
+                        </div>
+                    </div>
+
+                    <div class="control-group mt-2">
+                        <label>Skew X (Inclinar)</label>
+                        <input type="range" id="trans-skew" min="-45" max="45" value="0" oninput="updateTransformUI()">
+                    </div>
+
+                    <div class="h-px bg-gray-200 my-4"></div>
+
+                    <h4 class="font-bold text-xs text-indigo-600 uppercase mb-2">Transition (Animação)</h4>
+                    <div class="control-group">
+                        <label>Duração: <span id="trans-dur-val">0.3s</span></label>
+                        <input type="range" id="trans-dur" min="0.1" max="2" step="0.1" value="0.3" oninput="updateTransformUI()">
+                    </div>
+                     <div class="control-group">
+                        <label>Timing Function</label>
+                        <select id="trans-timing" class="w-full p-2 border rounded text-sm" onchange="updateTransformUI()">
+                            <option value="ease">Ease</option>
+                            <option value="linear">Linear</option>
+                            <option value="ease-in">Ease-In</option>
+                            <option value="ease-out">Ease-Out</option>
+                            <option value="ease-in-out">Ease-In-Out</option>
+                        </select>
+                    </div>
+
+                    <button onclick="copyTransformCSS()" class="mt-auto w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition active:scale-95">
+                        Copiar CSS
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scrollbar-view" class="view-container">
+        <div class="generator-container">
+            <div class="generator-card">
+                <div class="preview-area" id="scrollbar-preview-area">
+                    <div id="scrollbar-target">
+                        <h2 class="text-2xl font-bold mb-4">Preview do Scrollbar</h2>
+                        <p class="mb-4 text-gray-500 text-sm italic">Clique com o botão direito aqui para ver o menu personalizado (que você cria na aba 'Menu').</p>
+                        <p class="mb-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                        <p class="mb-4">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                        <p class="mb-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                        <p class="mb-4">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                        <p class="mb-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                        <p class="mb-4">Fim do conteúdo de exemplo.</p>
+                    </div>
+                </div>
+                <div class="controls-area">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Scrollbar Customizer</h3>
+                    <p class="text-xs text-gray-500 mb-4">Customize a barra de rolagem (Webkit).</p>
+
+                    <div class="control-group">
+                        <label>Largura: <span id="scroll-width-val">12px</span></label>
+                        <input type="range" id="scroll-width" min="4" max="30" value="12" oninput="updateScrollbarUI()">
+                    </div>
+                    <div class="control-group">
+                        <label>Arredondamento: <span id="scroll-radius-val">10px</span></label>
+                        <input type="range" id="scroll-radius" min="0" max="20" value="10" oninput="updateScrollbarUI()">
+                    </div>
+                    <div class="h-px bg-gray-200 my-2"></div>
+                    <div class="control-group">
+                        <label>Cor da Barra (Thumb)</label>
+                        <div class="flex items-center gap-2">
+                            <div class="color-dot" id="scroll-thumb-dot" style="background: #4f46e5;">
+                                <input type="color" id="scroll-thumb" value="#4f46e5" oninput="updateScrollbarUI()">
+                            </div>
+                            <span class="text-sm text-gray-600 font-mono" id="scroll-thumb-hex">#4F46E5</span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Cor do Fundo (Track)</label>
+                        <div class="flex items-center gap-2">
+                            <div class="color-dot" id="scroll-track-dot" style="background: #f1f1f1;">
+                                <input type="color" id="scroll-track" value="#f1f1f1" oninput="updateScrollbarUI()">
+                            </div>
+                            <span class="text-sm text-gray-600 font-mono" id="scroll-track-hex">#F1F1F1</span>
+                        </div>
+                    </div>
+
+                    <button onclick="copyScrollbarCSS()" class="mt-auto w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition active:scale-95">
+                        Copiar CSS
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="menu-view" class="view-container">
+        <div class="generator-container">
+            <div class="generator-card">
+                <div class="preview-area relative bg-gray-100">
+                    <div id="menu-preview-mock" class="context-menu-base absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                        <div class="context-item">
+                            <i data-lucide="scissors" width="16"></i> Recortar
+                        </div>
+                        <div class="context-item">
+                            <i data-lucide="copy" width="16"></i> Copiar
+                        </div>
+                        <div class="context-item">
+                            <i data-lucide="clipboard" width="16"></i> Colar
+                        </div>
+                        <div class="context-divider"></div>
+                        <div class="context-item">
+                            <i data-lucide="trash-2" width="16"></i> Excluir
+                        </div>
+                    </div>
+                </div>
+                <div class="controls-area">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Menu de Contexto</h3>
+                    <p class="text-xs text-gray-500 mb-4">Design do botão direito do mouse.</p>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="control-group">
+                            <label>Fundo</label>
+                            <div class="flex gap-2 items-center">
+                                <div class="color-dot" id="menu-bg-dot" style="background: #ffffff;"><input type="color" id="menu-bg" value="#ffffff" oninput="updateMenuUI()"></div>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label>Texto</label>
+                            <div class="flex gap-2 items-center">
+                                <div class="color-dot" id="menu-text-dot" style="background: #333333;"><input type="color" id="menu-text" value="#333333" oninput="updateMenuUI()"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mt-2">
+                        <div class="control-group">
+                            <label>Hover (Fundo)</label>
+                            <div class="flex gap-2 items-center">
+                                <div class="color-dot" id="menu-hover-bg-dot" style="background: #f3f4f6;"><input type="color" id="menu-hover-bg" value="#f3f4f6" oninput="updateMenuUI()"></div>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label>Hover (Texto)</label>
+                            <div class="flex gap-2 items-center">
+                                <div class="color-dot" id="menu-hover-text-dot" style="background: #000000;"><input type="color" id="menu-hover-text" value="#000000" oninput="updateMenuUI()"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="h-px bg-gray-200 my-4"></div>
+
+                    <div class="control-group">
+                        <label>Cor da Borda</label>
+                         <div class="flex gap-2 items-center">
+                            <div class="color-dot" id="menu-border-col-dot" style="background: #eeeeee;"><input type="color" id="menu-border-col" value="#eeeeee" oninput="updateMenuUI()"></div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Arredondamento: <span id="menu-radius-val">8px</span></label>
+                        <input type="range" id="menu-radius" min="0" max="20" value="8" oninput="updateMenuUI()">
+                    </div>
+
+                    <div class="control-group mt-2">
+                         <label class="flex items-center gap-2 text-sm font-bold text-gray-600 cursor-pointer">
+                            <input type="checkbox" id="menu-shadow-check" checked class="rounded text-indigo-600 focus:ring-indigo-500" onchange="updateMenuUI()">
+                            Ativar Sombra
+                        </label>
+                    </div>
+
+                    <button onclick="copyMenuCSS()" class="mt-auto w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition active:scale-95">
+                        Copiar CSS
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="css-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="flex justify-between items-center mb-2">
-                <h3 class="text-lg font-bold">Variáveis CSS (:root)</h3>
+                <h3 class="text-lg font-bold">Código CSS</h3>
                 <button onclick="closeCSSModal()" class="p-1 hover:bg-gray-100 rounded"><i data-lucide="x" width="20"></i></button>
             </div>
-            <p class="text-sm text-gray-500">Copie e cole isso no topo do seu arquivo CSS.</p>
+            <p class="text-sm text-gray-500">Copie e cole isso no seu projeto.</p>
             <div class="code-block" id="css-code-block"></div>
             <button onclick="copyCSSBlock()" class="w-full bg-indigo-600 text-white py-2 rounded font-semibold hover:bg-indigo-700 transition">Copiar Código</button>
         </div>
     </div>
 
-    <!-- MODAL AI INPUT (TEXT & IMAGE) -->
     <div id="ai-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="flex justify-between items-center mb-4">
@@ -574,14 +883,10 @@
                 </h3>
                 <button onclick="closeAIModal()" class="p-1 hover:bg-gray-100 rounded"><i data-lucide="x" width="20"></i></button>
             </div>
-
-            <!-- Tabs -->
             <div class="flex border-b border-gray-200 mb-4">
                 <button onclick="switchAiTab('text')" id="tab-text" class="flex-1 py-2 text-sm font-semibold text-purple-600 border-b-2 border-purple-600 transition">Texto Mágico</button>
                 <button onclick="switchAiTab('image')" id="tab-image" class="flex-1 py-2 text-sm font-semibold text-gray-500 hover:text-purple-600 transition">Extrair de Imagem</button>
             </div>
-            
-            <!-- Tab Text -->
             <div id="ai-panel-text">
                 <p class="text-sm text-gray-500 mb-2">Digite uma palavra-chave (ex: "Fogo", "Floresta", "Tech").</p>
                 <textarea id="ai-prompt" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none resize-none" placeholder="Ex: Oceano, Cyberpunk, Café..."></textarea>
@@ -589,8 +894,6 @@
                     <span>Gerar Paleta</span>
                 </button>
             </div>
-
-            <!-- Tab Image -->
             <div id="ai-panel-image" class="hidden">
                 <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition" onclick="document.getElementById('image-upload').click()">
                     <i data-lucide="image-plus" class="w-10 h-10 text-gray-400 mb-2"></i>
@@ -609,7 +912,6 @@
         </div>
     </div>
 
-    <!-- MODAL UI MAGIC GENERATOR -->
     <div id="ui-modal" class="modal-overlay">
         <div class="modal-content large">
             <div class="flex justify-between items-center mb-4">
@@ -619,9 +921,7 @@
                 </h3>
                 <button onclick="closeUIModal()" class="p-1 hover:bg-gray-100 rounded"><i data-lucide="x" width="20"></i></button>
             </div>
-            
             <p class="text-sm text-gray-500 mb-4">Visualize sua paleta em componentes reais (Geração Instantânea).</p>
-
             <div class="flex gap-2 mb-4">
                 <select id="ui-component-type" class="p-2 border border-gray-300 rounded-md text-sm flex-1">
                     <option value="hero">Hero Section</option>
@@ -633,14 +933,12 @@
                     Gerar UI
                 </button>
             </div>
-
             <div id="ui-preview-container">
                 <p class="text-gray-400 text-sm p-4 text-center">Selecione um componente e clique em "Gerar UI".</p>
             </div>
         </div>
     </div>
 
-    <!-- MODAL ANALYSIS RESULT -->
     <div id="analysis-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="flex justify-between items-center mb-4">
@@ -650,14 +948,10 @@
                 </h3>
                 <button onclick="closeAnalysisModal()" class="p-1 hover:bg-gray-100 rounded"><i data-lucide="x" width="20"></i></button>
             </div>
-            
-            <div id="analysis-result" class="analysis-content">
-                <!-- Content injected by JS -->
-            </div>
+            <div id="analysis-result" class="analysis-content"></div>
         </div>
     </div>
 
-    <!-- Toast de Feedback -->
     <div id="toast" class="msg-toast shadow-lg">Cor Copiada!</div>
 
     <script>
@@ -667,7 +961,6 @@
         let paletteColors = [];
         let gradientState = { c1: '#4facfe', c2: '#00f2fe', angle: 90 };
         
-        // Dicionário de Cores para "IA" Local
         const keywordColors = {
             'fogo': { h: 10, s: 90 }, 'vermelho': { h: 0, s: 90 }, 'calor': { h: 20, s: 95 },
             'floresta': { h: 120, s: 60 }, 'verde': { h: 110, s: 70 }, 'natureza': { h: 100, s: 50 },
@@ -734,11 +1027,10 @@
             return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
         }
 
-        // --- 4. GERAÇÃO (HARMONIA) ---
+        // --- CORE PALETTE LOGIC ---
         function generateHarmoniousPalette(seedH = null, seedS = null) {
             const lockedIndices = lockedState.map((isLocked, idx) => isLocked ? idx : -1).filter(i => i !== -1);
             let baseColorHSL;
-
             if (lockedIndices.length > 0) {
                 baseColorHSL = hexToHSL(paletteColors[lockedIndices[0]]);
             } else if (seedH !== null) {
@@ -746,39 +1038,20 @@
             } else {
                 baseColorHSL = { h: Math.floor(Math.random() * 360), s: Math.floor(Math.random() * 40) + 50, l: Math.floor(Math.random() * 40) + 30 };
             }
-
             const schemes = ['analogous', 'monochromatic', 'triad', 'complementary', 'compound'];
             const scheme = schemes[Math.floor(Math.random() * schemes.length)];
             const newColors = [];
-
             for (let i = 0; i < 5; i++) {
                 if (lockedState[i]) { newColors.push(paletteColors[i]); continue; }
                 let h = baseColorHSL.h, s = baseColorHSL.s, l = baseColorHSL.l;
                 const offset = (Math.random() * 20 - 10); 
-                
-                // Variação baseada no index para garantir contraste
                 switch (scheme) {
                     case 'analogous': h = (h + (i * 30) + offset) % 360; break;
-                    case 'monochromatic': 
-                        s = Math.max(10, Math.min(95, s + (Math.random() * 40 - 20))); 
-                        l = Math.max(10, Math.min(90, l + ((i - 2) * 15))); 
-                        break;
-                    case 'triad': 
-                        if (i % 3 === 1) h = (h + 120) % 360; 
-                        if (i % 3 === 2) h = (h + 240) % 360; 
-                        l = Math.max(20, Math.min(85, l + offset)); 
-                        break;
-                    case 'complementary': 
-                        if (i > 2) h = (h + 180) % 360; 
-                        l = Math.random() * 60 + 20; 
-                        break;
-                    default: 
-                        h = (h + (i * 45)) % 360; 
-                        s = Math.random() * 50 + 40; 
-                        l = Math.random() * 60 + 20;
+                    case 'monochromatic': s = Math.max(10, Math.min(95, s + (Math.random() * 40 - 20))); l = Math.max(10, Math.min(90, l + ((i - 2) * 15))); break;
+                    case 'triad': if (i % 3 === 1) h = (h + 120) % 360; if (i % 3 === 2) h = (h + 240) % 360; l = Math.max(20, Math.min(85, l + offset)); break;
+                    case 'complementary': if (i > 2) h = (h + 180) % 360; l = Math.random() * 60 + 20; break;
+                    default: h = (h + (i * 45)) % 360; s = Math.random() * 50 + 40; l = Math.random() * 60 + 20;
                 }
-                
-                // Correção de brilho extremo
                 if (l < 10) l = 15; if (l > 95) l = 92;
                 newColors.push(HSLToHex(h, s, l));
             }
@@ -802,9 +1075,8 @@
             return roles;
         }
 
-        // --- 5. UI UPDATE ---
+        // --- PALETTE UI ---
         const paletteContainer = document.getElementById('palette-view');
-
         function initPalette() {
             paletteContainer.innerHTML = '';
             for(let i=0; i<5; i++){
@@ -821,18 +1093,11 @@
                                 <i data-lucide="pen-line" width="20"></i>
                                 <input type="color" class="absolute opacity-0 w-0 h-0" onchange="updateColManual(${i}, this.value)">
                             </label>
-
-                            <button class="icon-btn" onclick="generateVariants(${i})" title="Ver Gradientes desta cor">
-                                <i data-lucide="grid-2x2" width="20"></i>
-                            </button>
-
-                            <button class="icon-btn lock-btn" onclick="toggleLock(${i})" title="Travar">
-                                <i data-lucide="unlock" width="20" class="icon-lock"></i>
-                            </button>
+                            <button class="icon-btn" onclick="generateVariants(${i})" title="Ver Gradientes desta cor"><i data-lucide="grid-2x2" width="20"></i></button>
+                            <button class="icon-btn lock-btn" onclick="toggleLock(${i})" title="Travar"><i data-lucide="unlock" width="20" class="icon-lock"></i></button>
                         </div>
                         <h2 class="hex-text" onclick="copyText('${i}')">#FFFFFF</h2>
-                    </div>
-                `;
+                    </div>`;
                 paletteContainer.appendChild(col);
             }
             refreshIcons();
@@ -842,21 +1107,8 @@
         function generatePalette(initial = false, seedH = null, seedS = null) {
             const newColors = generateHarmoniousPalette(seedH, seedS);
             const roles = assignRoles(newColors);
-            
             newColors.forEach((color, idx) => updateColUI(idx, color, roles[idx]));
             updateRootVariables(newColors);
-        }
-
-        function invertPalette() {
-            const newColors = paletteColors.map((hex) => {
-                const hsl = hexToHSL(hex);
-                const newL = 100 - hsl.l;
-                return HSLToHex(hsl.h, hsl.s, newL);
-            });
-            const roles = assignRoles(newColors);
-            newColors.forEach((color, idx) => updateColUI(idx, color, roles[idx]));
-            updateRootVariables(newColors);
-            showToast("Tema invertido!");
         }
 
         function updateColUI(index, color, role) {
@@ -864,15 +1116,11 @@
             const col = document.getElementById(`col-${index}`);
             const text = col.querySelector('.hex-text');
             const roleBadge = document.getElementById(`role-${index}`);
-            
             col.style.backgroundColor = color;
             text.textContent = color;
             if(role) roleBadge.textContent = role;
-
             const lum = getLuminance(color);
-            const isDark = lum < 0.5;
-
-            if(isDark) {
+            if(lum < 0.5) {
                 col.classList.remove('light-text'); col.classList.add('dark-text'); col.style.color = '#FFFFFF';
             } else {
                 col.classList.remove('dark-text'); col.classList.add('light-text'); col.style.color = '#000000';
@@ -885,423 +1133,96 @@
             updateCSSModalContent(colors);
         }
 
-        function updateCSSModalContent(colors) {
+        function updateCSSModalContent(text = null) {
             const block = document.getElementById('css-code-block');
-            let css = ":root {\n";
-            colors.forEach((c, i) => css += `  --color-${i}: ${c};\n`);
-            css += "}";
-            block.textContent = css;
+            if (text && typeof text === 'string') {
+                block.textContent = text;
+            } else {
+                let css = ":root {\n";
+                paletteColors.forEach((c, i) => css += `  --color-${i}: ${c};\n`);
+                css += "}";
+                block.textContent = css;
+            }
         }
 
         function toggleLock(index) {
             lockedState[index] = !lockedState[index];
             const col = document.getElementById(`col-${index}`);
             const icon = col.querySelector('.icon-lock');
-            if(lockedState[index]){
-                col.classList.add('locked'); icon.setAttribute('data-lucide', 'lock');
-            } else {
-                col.classList.remove('locked'); icon.setAttribute('data-lucide', 'unlock');
-            }
+            if(lockedState[index]){ col.classList.add('locked'); icon.setAttribute('data-lucide', 'lock'); }
+            else { col.classList.remove('locked'); icon.setAttribute('data-lucide', 'unlock'); }
             refreshIcons();
         }
 
         function updateColManual(index, val) {
-            const hex = val.toUpperCase();
-            paletteColors[index] = hex;
+            paletteColors[index] = val.toUpperCase();
             const roles = assignRoles(paletteColors);
-            
             paletteColors.forEach((c, i) => updateColUI(i, c, roles[i]));
             updateRootVariables(paletteColors);
             if(!lockedState[index]) toggleLock(index);
         }
 
-        // --- 6. LOCAL "SMART" FEATURES (SEM API) ---
+        function invertPalette() {
+            const newColors = paletteColors.map((hex) => {
+                const hsl = hexToHSL(hex);
+                return HSLToHex(hsl.h, hsl.s, 100 - hsl.l);
+            });
+            const roles = assignRoles(newColors);
+            newColors.forEach((color, idx) => updateColUI(idx, color, roles[idx]));
+            updateRootVariables(newColors);
+            showToast("Tema invertido!");
+        }
 
-        // A. TEXTO MÁGICO
+        // --- SMART GENERATOR ---
         function generateLocalTextColors() {
             const prompt = document.getElementById('ai-prompt').value.toLowerCase().trim();
             if(!prompt) return;
-
-            let seedH = null;
-            let seedS = null;
-
-            // 1. Tenta achar palavra chave
-            for (const key in keywordColors) {
-                if (prompt.includes(key)) {
-                    seedH = keywordColors[key].h;
-                    seedS = keywordColors[key].s;
-                    break;
-                }
-            }
-
-            // 2. Se não achar, usa hash da string para criar cor determinística
+            let seedH = null; let seedS = null;
+            for (const key in keywordColors) { if (prompt.includes(key)) { seedH = keywordColors[key].h; seedS = keywordColors[key].s; break; } }
             if (seedH === null) {
-                let hash = 0;
-                for (let i = 0; i < prompt.length; i++) {
-                    hash = prompt.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                seedH = Math.abs(hash % 360);
-                seedS = 65; // Saturação média segura
+                let hash = 0; for (let i = 0; i < prompt.length; i++) hash = prompt.charCodeAt(i) + ((hash << 5) - hash);
+                seedH = Math.abs(hash % 360); seedS = 65;
             }
-
-            // Gera a paleta com o seed
             generatePalette(false, seedH, seedS);
             closeAIModal();
             showToast(`Paleta gerada para "${prompt}"`);
         }
 
-        // B. EXTRAÇÃO DE IMAGEM
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.getElementById('image-preview');
-                    img.src = e.target.result;
-                    document.getElementById('image-preview-container').classList.remove('hidden');
-                    document.getElementById('ai-generate-btn-image').disabled = false;
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function extractColorsFromImage() {
-            const img = document.getElementById('image-preview');
-            const canvas = document.getElementById('image-canvas');
-            const ctx = canvas.getContext('2d');
-            
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            ctx.drawImage(img, 0, 0);
-
-            // Amostragem de pixels (pula pixels para performance)
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-            const step = 20; 
-            const colors = [];
-
-            for (let i = 0; i < imageData.length; i += 4 * step) {
-                const r = imageData[i];
-                const g = imageData[i + 1];
-                const b = imageData[i + 2];
-                // Ignora transparência ou muito branco/preto para evitar tédio
-                if (imageData[i+3] < 128) continue;
-                colors.push({r, g, b});
-            }
-
-            // Algoritmo de Quantização Simples (Agrupamento por distância)
-            const uniqueColors = [];
-            const threshold = 50; // Distância mínima entre cores
-
-            for (const c of colors) {
-                if (uniqueColors.length >= 5) break;
-                
-                const isDistinct = uniqueColors.every(uc => {
-                    const dist = Math.sqrt(Math.pow(c.r - uc.r, 2) + Math.pow(c.g - uc.g, 2) + Math.pow(c.b - uc.b, 2));
-                    return dist > threshold;
-                });
-
-                if (isDistinct) {
-                    uniqueColors.push(c);
-                }
-            }
-
-            // Converte para HEX e aplica
-            if(uniqueColors.length > 0) {
-                const hexColors = uniqueColors.map(c => {
-                    return "#" + ((1 << 24) + (c.r << 16) + (c.g << 8) + c.b).toString(16).slice(1).toUpperCase();
-                });
-                
-                // Preenche até 5 se faltar
-                while(hexColors.length < 5) {
-                    hexColors.push(hexColors[0]);
-                }
-
-                const roles = assignRoles(hexColors);
-                hexColors.forEach((color, idx) => updateColUI(idx, color, roles[idx]));
-                updateRootVariables(hexColors);
-                
-                closeAIModal();
-                showToast("Cores extraídas da imagem!");
-            }
-        }
-
-        // C. ANÁLISE LOCAL
-        function analyzePalette() {
-            document.getElementById('analysis-modal').classList.add('open');
-            const div = document.getElementById('analysis-result');
-            
-            let avgLum = 0;
-            let avgSat = 0;
-            paletteColors.forEach(c => {
-                const hsl = hexToHSL(c);
-                avgLum += hsl.l;
-                avgSat += hsl.s;
-            });
-            avgLum /= 5;
-            avgSat /= 5;
-
-            let mood = "";
-            if (avgSat > 70) mood = "Energética e Vibrante";
-            else if (avgSat < 30) mood = "Sóbria e Minimalista";
-            else mood = "Equilibrada e Natural";
-
-            let type = avgLum > 60 ? "Clara / Airy" : (avgLum < 30 ? "Escura / Bold" : "Média");
-
-            // Acha cor de destaque
-            const accent = paletteColors.find((c, i) => document.getElementById(`role-${i}`).innerText === "Destaque") || paletteColors[4];
-
-            const html = `
-                <div class="space-y-4">
-                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <h4 class="font-bold text-gray-700 uppercase text-xs mb-1">Vibe Geral</h4>
-                        <p class="text-lg font-medium text-indigo-900">${mood} (${type})</p>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="p-4 bg-gray-50 rounded-lg">
-                            <h4 class="font-bold text-gray-700 uppercase text-xs mb-1">Destaque</h4>
-                            <div class="flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-full border border-gray-300" style="background:${accent}"></div>
-                                <span class="font-mono text-sm">${accent}</span>
-                            </div>
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-lg">
-                            <h4 class="font-bold text-gray-700 uppercase text-xs mb-1">Contraste Médio</h4>
-                            <span class="text-sm">Adequado para Web</span>
-                        </div>
-                    </div>
-
-                    <div class="text-sm text-gray-500">
-                        *Análise gerada localmente baseada em HSL e Luminância.
-                    </div>
-                </div>
-            `;
-            div.innerHTML = html;
-        }
-
-        // D. UI GENERATOR (TEMPLATES)
-        function generateLocalUI() {
-            const type = document.getElementById('ui-component-type').value;
-            const container = document.getElementById('ui-preview-container');
-            const c = paletteColors; // [0]..[4]
-            
-            // Define contrast colors for text
-            const textC = c.map(hex => getLuminance(hex) > 0.5 ? '#111827' : '#FFFFFF');
-
-            let html = "";
-
-            if (type === 'hero') {
-                html = `
-                    <div class="w-full p-8 md:p-12 rounded-xl flex flex-col items-center text-center gap-6" style="background-color: ${c[0]}; color: ${textC[0]}">
-                        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide opacity-80" style="background-color: ${c[2]}; color: ${textC[2]}">Novo Lançamento</span>
-                        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight">Crie algo <span style="color: ${c[4]}">Extraordinário</span></h1>
-                        <p class="max-w-md opacity-80">Uma paleta de cores define não apenas o estilo, mas a emoção do seu projeto.</p>
-                        <div class="flex gap-4 mt-2">
-                            <button class="px-6 py-3 rounded-lg font-bold shadow-lg transform hover:scale-105 transition" style="background-color: ${c[4]}; color: ${textC[4]}">Começar Agora</button>
-                            <button class="px-6 py-3 rounded-lg font-bold border-2 opacity-80 hover:opacity-100 transition" style="border-color: ${c[4]}; color: ${c[4]}">Saber Mais</button>
-                        </div>
-                    </div>
-                `;
-            } else if (type === 'card') {
-                html = `
-                    <div class="max-w-sm mx-auto rounded-2xl overflow-hidden shadow-xl" style="background-color: ${c[0]}">
-                        <div class="h-48 w-full flex items-center justify-center" style="background-color: ${c[1]}">
-                            <i data-lucide="image" class="w-12 h-12 opacity-20" style="color: ${textC[1]}"></i>
-                        </div>
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 class="text-xl font-bold mb-1" style="color: ${c[4]}">Produto Premium</h3>
-                                    <p class="text-xs font-medium opacity-60" style="color: ${textC[0]}">Edição Limitada</p>
-                                </div>
-                                <span class="text-lg font-bold" style="color: ${c[3]}">$299</span>
-                            </div>
-                            <p class="text-sm mb-6 opacity-70" style="color: ${textC[0]}">Este item possui acabamento exclusivo e cores harmonizadas automaticamente.</p>
-                            <button class="w-full py-3 rounded-lg font-bold transition hover:opacity-90" style="background-color: ${c[3]}; color: ${textC[3]}">Adicionar ao Carrinho</button>
-                        </div>
-                    </div>
-                `;
-            } else if (type === 'stats') {
-                html = `
-                    <div class="grid grid-cols-2 gap-4 w-full max-w-lg mx-auto">
-                        <div class="p-6 rounded-xl shadow-sm border border-opacity-10" style="background-color: ${c[0]}; border-color: ${c[4]}">
-                            <p class="text-3xl font-bold mb-1" style="color: ${c[4]}">84%</p>
-                            <p class="text-xs font-medium opacity-60" style="color: ${textC[0]}">Crescimento</p>
-                        </div>
-                        <div class="p-6 rounded-xl shadow-sm" style="background-color: ${c[4]}">
-                            <p class="text-3xl font-bold mb-1" style="color: ${textC[4]}">12k</p>
-                            <p class="text-xs font-medium opacity-60" style="color: ${textC[4]}">Novos Usuários</p>
-                        </div>
-                        <div class="p-6 col-span-2 rounded-xl flex items-center justify-between" style="background-color: ${c[1]}">
-                            <div>
-                                <p class="font-bold" style="color: ${textC[1]}">Status do Sistema</p>
-                                <p class="text-xs opacity-60" style="color: ${textC[1]}">Atualizado agora</p>
-                            </div>
-                            <div class="px-3 py-1 rounded text-xs font-bold" style="background-color: ${c[2]}; color: ${textC[2]}">Operacional</div>
-                        </div>
-                    </div>
-                `;
-            } else if (type === 'login') {
-                html = `
-                    <div class="w-full max-w-md mx-auto p-8 rounded-2xl shadow-2xl" style="background-color: ${c[0]}">
-                        <h2 class="text-2xl font-bold mb-6 text-center" style="color: ${c[4]}">Bem-vindo</h2>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold uppercase mb-1 opacity-70" style="color: ${textC[0]}">Email</label>
-                                <input type="text" class="w-full p-3 rounded-lg border-2 bg-transparent outline-none focus:border-opacity-100 transition" style="border-color: ${c[2]}; color: ${textC[0]}" placeholder="seu@email.com">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold uppercase mb-1 opacity-70" style="color: ${textC[0]}">Senha</label>
-                                <input type="password" class="w-full p-3 rounded-lg border-2 bg-transparent outline-none focus:border-opacity-100 transition" style="border-color: ${c[2]}; color: ${textC[0]}" placeholder="••••••">
-                            </div>
-                            <button class="w-full py-3 mt-4 rounded-lg font-bold shadow-md hover:shadow-lg transition transform active:scale-95" style="background-color: ${c[4]}; color: ${textC[4]}">Entrar</button>
-                            <p class="text-xs text-center mt-4 opacity-50 cursor-pointer hover:underline" style="color: ${textC[0]}">Esqueceu a senha?</p>
-                        </div>
-                    </div>
-                `;
-            }
-
-            container.innerHTML = html;
-            lucide.createIcons(); // Atualiza ícones se houver
-        }
-
-        // --- 7. VISION SIMULATOR ---
-        function toggleVisionMenu() {
-            document.getElementById('vision-menu').classList.toggle('open');
-        }
-        function setVisionMode(mode) {
-            const body = document.body;
-            body.className = ''; 
-            if (mode !== 'normal') {
-                body.classList.add(`filter-${mode}`);
-            }
-            document.querySelectorAll('.vision-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('vision-menu').classList.remove('open');
-            showToast(`Modo visão: ${mode}`);
-        }
-
-        function switchAiTab(tab) {
-            const tabText = document.getElementById('tab-text');
-            const tabImage = document.getElementById('tab-image');
-            const panelText = document.getElementById('ai-panel-text');
-            const panelImage = document.getElementById('ai-panel-image');
-
-            if (tab === 'text') {
-                tabText.classList.replace('text-gray-500', 'text-purple-600');
-                tabText.classList.add('border-b-2', 'border-purple-600');
-                tabImage.classList.replace('text-purple-600', 'text-gray-500');
-                tabImage.classList.remove('border-b-2', 'border-purple-600');
-                panelText.classList.remove('hidden');
-                panelImage.classList.add('hidden');
-            } else {
-                tabImage.classList.replace('text-gray-500', 'text-purple-600');
-                tabImage.classList.add('border-b-2', 'border-purple-600');
-                tabText.classList.replace('text-purple-600', 'text-gray-500');
-                tabText.classList.remove('border-b-2', 'border-purple-600');
-                panelImage.classList.remove('hidden');
-                panelText.classList.add('hidden');
-            }
-        }
-
-        // --- 8. UTILITÁRIOS GERAIS ---
+        // --- UI UTILS ---
         function switchView(viewName) {
             currentView = viewName;
             document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
-                btn.classList.add('inactive');
-            });
+            document.querySelectorAll('.nav-btn').forEach(btn => { btn.classList.remove('active'); btn.classList.add('inactive'); });
             document.getElementById(`${viewName}-view`).classList.add('active');
             const activeBtn = document.getElementById(`btn-${viewName}`);
-            if(activeBtn) {
-                activeBtn.classList.remove('inactive');
-                activeBtn.classList.add('active');
-            }
+            if(activeBtn) { activeBtn.classList.remove('inactive'); activeBtn.classList.add('active'); }
+            
             if(viewName === 'shadow') updateShadowUI();
             if(viewName === 'border') updateBorderUI();
+            if(viewName === 'scrollbar') updateScrollbarUI();
+            if(viewName === 'menu') updateMenuUI();
+            if(viewName === 'typography') updateTypographyUI();
+            if(viewName === 'transform') updateTransformUI();
         }
 
         function copyToClipboard(text, successMessage) {
             const textarea = document.createElement('textarea');
             textarea.value = text;
-            textarea.style.position = 'fixed';
-            textarea.style.left = '-9999px';
+            textarea.style.position = 'fixed'; textarea.style.left = '-9999px';
             document.body.appendChild(textarea);
             textarea.select();
-            try {
-                document.execCommand('copy');
-                showToast(successMessage || "Copiado!");
-            } catch (err) {
-                console.error('Erro ao copiar:', err);
-                showToast("Erro ao copiar.");
-            }
+            try { document.execCommand('copy'); showToast(successMessage || "Copiado!"); } catch (err) { showToast("Erro ao copiar."); }
             document.body.removeChild(textarea);
         }
 
-        function copyText(index) {
-            const hex = paletteColors[index];
-            copyToClipboard(hex, "Cor " + hex + " Copiada!");
-        }
-
+        function copyText(index) { copyToClipboard(paletteColors[index], "Cor Copiada!"); }
         function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.classList.add('active');
+            const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('active');
             setTimeout(() => t.classList.remove('active'), 2000);
         }
-
         function refreshIcons() { lucide.createIcons(); }
 
-        // Modals
-        function openCSSModal() { document.getElementById('css-modal').classList.add('open'); }
-        function closeCSSModal() { document.getElementById('css-modal').classList.remove('open'); }
-        function copyCSSBlock() {
-            const code = document.getElementById('css-code-block').textContent;
-            copyToClipboard(code, "Bloco CSS copiado!");
-        }
-
-        function openAIModal() { document.getElementById('ai-modal').classList.add('open'); document.getElementById('ai-prompt').focus(); }
-        function closeAIModal() { document.getElementById('ai-modal').classList.remove('open'); }
-        
-        function closeAnalysisModal() { document.getElementById('analysis-modal').classList.remove('open'); }
-
-        function openUIModal() { document.getElementById('ui-modal').classList.add('open'); }
-        function closeUIModal() { document.getElementById('ui-modal').classList.remove('open'); }
-
-
-        // Gradient
-        function initGradient() { randomGradient(); }
-        function randomGradient() {
-            gradientState.c1 = HSLToHex(Math.random()*360, 80, 60);
-            gradientState.c2 = HSLToHex(Math.random()*360, 80, 60);
-            gradientState.angle = Math.floor(Math.random() * 360);
-            updateGradientUI();
-        }
-        function updateGradientFromInput() {
-            gradientState.c1 = document.getElementById('input-grad-1').value;
-            gradientState.c2 = document.getElementById('input-grad-2').value;
-            gradientState.angle = document.getElementById('grad-angle').value;
-            updateGradientUI();
-        }
-        function updateGradientUI() {
-            document.getElementById('input-grad-1').value = gradientState.c1;
-            document.getElementById('dot-1').style.backgroundColor = gradientState.c1;
-            document.getElementById('grad-hex-1').textContent = gradientState.c1.toUpperCase();
-            document.getElementById('input-grad-2').value = gradientState.c2;
-            document.getElementById('dot-2').style.backgroundColor = gradientState.c2;
-            document.getElementById('grad-hex-2').textContent = gradientState.c2.toUpperCase();
-            document.getElementById('grad-angle').value = gradientState.angle;
-            document.getElementById('angle-val').textContent = gradientState.angle + '°';
-            const css = `linear-gradient(${gradientState.angle}deg, ${gradientState.c1}, ${gradientState.c2})`;
-            document.getElementById('gradient-preview').style.background = css;
-        }
-        function copyGradientCSS() {
-            const css = `background: linear-gradient(${gradientState.angle}deg, ${gradientState.c1}, ${gradientState.c2});`;
-            copyToClipboard(css, "CSS Copiado!");
-        }
-
-        // --- 9. SHADOW LOGIC ---
+        // --- SHADOW & BORDER ---
         function updateShadowUI() {
             const x = document.getElementById('shadow-x').value;
             const y = document.getElementById('shadow-y').value;
@@ -1310,131 +1231,322 @@
             const color = document.getElementById('shadow-color').value;
             const opacity = document.getElementById('shadow-opacity').value;
             const inset = document.getElementById('shadow-inset').checked;
-
             document.getElementById('shadow-x-val').innerText = x + 'px';
             document.getElementById('shadow-y-val').innerText = y + 'px';
             document.getElementById('shadow-blur-val').innerText = blur + 'px';
             document.getElementById('shadow-spread-val').innerText = spread + 'px';
             document.getElementById('shadow-opacity-val').innerText = opacity;
             document.getElementById('shadow-color-dot').style.background = color;
-
             const r = parseInt(color.substr(1,2), 16);
             const g = parseInt(color.substr(3,2), 16);
             const b = parseInt(color.substr(5,2), 16);
-            const rgba = `rgba(${r}, ${g}, ${b}, ${opacity})`;
-
-            const insetStr = inset ? 'inset ' : '';
-            const css = `${insetStr}${x}px ${y}px ${blur}px ${spread}px ${rgba}`;
-            
+            const css = `${inset ? 'inset ' : ''}${x}px ${y}px ${blur}px ${spread}px rgba(${r}, ${g}, ${b}, ${opacity})`;
             document.getElementById('shadow-preview-box').style.boxShadow = css;
         }
+        function copyShadowCSS() { copyToClipboard(`box-shadow: ${document.getElementById('shadow-preview-box').style.boxShadow};`, "CSS de Sombra Copiado!"); }
 
-        function copyShadowCSS() {
-            const box = document.getElementById('shadow-preview-box');
-            const shadow = box.style.boxShadow;
-            copyToClipboard(`box-shadow: ${shadow};`, "CSS de Sombra Copiado!");
-        }
-
-        // --- 10. BORDER LOGIC ---
         function updateBorderUI(individual = false) {
             const width = document.getElementById('border-width').value;
             const color = document.getElementById('border-color').value;
             const style = document.getElementById('border-style').value;
-            
             const radiusAll = document.getElementById('border-radius').value;
-            const tl = document.getElementById('br-tl').value;
-            const tr = document.getElementById('br-tr').value;
-            const bl = document.getElementById('br-bl').value;
-            const br = document.getElementById('br-br').value;
-
+            const box = document.getElementById('border-preview-box');
             document.getElementById('border-width-val').innerText = width + 'px';
             document.getElementById('border-color-dot').style.background = color;
-
-            const box = document.getElementById('border-preview-box');
-            
-            box.style.borderWidth = width + 'px';
-            box.style.borderColor = color;
-            box.style.borderStyle = style;
-
+            box.style.borderWidth = width + 'px'; box.style.borderColor = color; box.style.borderStyle = style;
             if (!individual) {
-                document.getElementById('br-tl').value = radiusAll;
-                document.getElementById('br-tr').value = radiusAll;
-                document.getElementById('br-bl').value = radiusAll;
-                document.getElementById('br-br').value = radiusAll;
+                document.getElementById('br-tl').value = radiusAll; document.getElementById('br-tr').value = radiusAll;
+                document.getElementById('br-bl').value = radiusAll; document.getElementById('br-br').value = radiusAll;
                 document.getElementById('border-radius-val').innerText = radiusAll + 'px';
                 box.style.borderRadius = radiusAll + 'px';
             } else {
-                box.style.borderTopLeftRadius = tl + 'px';
-                box.style.borderTopRightRadius = tr + 'px';
-                box.style.borderBottomLeftRadius = bl + 'px';
-                box.style.borderBottomRightRadius = br + 'px';
+                box.style.borderTopLeftRadius = document.getElementById('br-tl').value + 'px';
+                box.style.borderTopRightRadius = document.getElementById('br-tr').value + 'px';
+                box.style.borderBottomLeftRadius = document.getElementById('br-bl').value + 'px';
+                box.style.borderBottomRightRadius = document.getElementById('br-br').value + 'px';
                 document.getElementById('border-radius-val').innerText = 'Custom';
             }
         }
-
-        function copyBorderCSS() {
+        function copyBorderCSS() { 
             const box = document.getElementById('border-preview-box');
-            const css = `border: ${box.style.borderWidth} ${box.style.borderStyle} ${box.style.borderColor};\nborder-radius: ${box.style.borderRadius};`;
-            copyToClipboard(css, "CSS de Borda Copiado!");
+            copyToClipboard(`border: ${box.style.borderWidth} ${box.style.borderStyle} ${box.style.borderColor};\nborder-radius: ${box.style.borderRadius};`, "CSS de Borda Copiado!"); 
         }
 
-        function generateVariants(baseIndex) {
-            const base = paletteColors[baseIndex];
-            const hsl = hexToHSL(base);
-            
-            if(!lockedState[baseIndex]) toggleLock(baseIndex);
+        // --- DYNAMIC STYLE HANDLER (Scroll + Menu + Transform + Typo) ---
+        function updateDynamicStyles() {
+            // Scrollbar inputs
+            const sWidth = document.getElementById('scroll-width').value;
+            const sRadius = document.getElementById('scroll-radius').value;
+            const sThumb = document.getElementById('scroll-thumb').value;
+            const sTrack = document.getElementById('scroll-track').value;
 
-            let variants = [];
-            variants.push(HSLToHex(hsl.h, Math.max(0, hsl.s-20), Math.min(95, hsl.l+30))); // Light
-            variants.push(HSLToHex(hsl.h, hsl.s, Math.min(90, hsl.l+15))); // Mid-Light
-            variants.push(base); // Base
-            variants.push(HSLToHex((hsl.h+30)%360, hsl.s, hsl.l)); // Analogous
-            variants.push(HSLToHex(hsl.h, Math.min(100, hsl.s+10), Math.max(5, hsl.l-30))); // Dark
+            // Menu inputs
+            const mBg = document.getElementById('menu-bg').value;
+            const mText = document.getElementById('menu-text').value;
+            const mHoverBg = document.getElementById('menu-hover-bg').value;
+            const mHoverText = document.getElementById('menu-hover-text').value;
+            const mBorder = document.getElementById('menu-border-col').value;
+            const mRadius = document.getElementById('menu-radius').value;
+            const mShadow = document.getElementById('menu-shadow-check').checked;
+            const shadowCSS = mShadow ? '0 4px 12px rgba(0,0,0,0.15)' : 'none';
 
-            let vIdx = 0;
-            for(let i=0; i<5; i++){
-                if(i === baseIndex) continue;
-                if(vIdx === 2) vIdx++; 
-                if(!lockedState[i]) {
-                    paletteColors[i] = variants[vIdx];
-                    vIdx++;
+            // Transform inputs
+            const tRotate = document.getElementById('trans-rotate').value;
+            const tScale = document.getElementById('trans-scale').value;
+            const tX = document.getElementById('trans-x').value;
+            const tY = document.getElementById('trans-y').value;
+            const tSkew = document.getElementById('trans-skew').value;
+            const tDur = document.getElementById('trans-dur').value;
+            const tTiming = document.getElementById('trans-timing').value;
+
+            const styleEl = document.getElementById('dynamic-styles');
+            styleEl.innerHTML = `
+                /* SCROLLBAR */
+                #scrollbar-target::-webkit-scrollbar { width: ${sWidth}px; }
+                #scrollbar-target::-webkit-scrollbar-track { background: ${sTrack}; }
+                #scrollbar-target::-webkit-scrollbar-thumb { background-color: ${sThumb}; border-radius: ${sRadius}px; border: 3px solid ${sTrack}; }
+                #scrollbar-target::-webkit-scrollbar-thumb:hover { background-color: ${adjustColor(sThumb, -20)}; }
+
+                /* CONTEXT MENU */
+                .context-menu-base {
+                    background-color: ${mBg} !important;
+                    color: ${mText} !important;
+                    border: 1px solid ${mBorder} !important;
+                    border-radius: ${mRadius}px !important;
+                    box-shadow: ${shadowCSS} !important;
                 }
-            }
-            const roles = assignRoles(paletteColors);
-            paletteColors.forEach((c, i) => updateColUI(i, c, roles[i]));
-            updateRootVariables(paletteColors);
+                .context-menu-base .context-item:hover {
+                    background-color: ${mHoverBg} !important;
+                    color: ${mHoverText} !important;
+                }
+                .context-menu-base .context-divider {
+                    background-color: ${mBorder} !important;
+                }
+
+                /* TRANSFORM PREVIEW */
+                #transform-box {
+                    transition: transform ${tDur}s ${tTiming};
+                }
+                .transform-box-wrapper:hover #transform-box {
+                    transform: rotate(${tRotate}deg) scale(${tScale}) translate(${tX}px, ${tY}px) skew(${tSkew}deg);
+                }
+            `;
         }
 
-        // Eventos
-        document.addEventListener('keydown', (e) => {
-            const openModals = document.querySelectorAll('.modal-overlay.open');
+        // --- TYPOGRAPHY LOGIC ---
+        function updateTypographyUI() {
+            const h1Font = document.getElementById('typo-font-h1').value;
+            const h1Size = document.getElementById('typo-size-h1').value;
+            const h1Weight = document.getElementById('typo-weight-h1').value;
+            const h1Space = document.getElementById('typo-space-h1').value;
             
-            if(e.code === 'Space' && openModals.length === 0 && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-                e.preventDefault();
-                if(currentView === 'palette') generatePalette();
-                if(currentView === 'gradient') randomGradient();
-            }
+            const pFont = document.getElementById('typo-font-p').value;
+            const pSize = document.getElementById('typo-size-p').value;
+            const pLine = document.getElementById('typo-line-p').value;
+
+            // Labels
+            document.getElementById('typo-size-h1-val').innerText = h1Size + 'px';
+            document.getElementById('typo-weight-h1-val').innerText = h1Weight;
+            document.getElementById('typo-space-h1-val').innerText = h1Space + 'px';
+            document.getElementById('typo-size-p-val').innerText = pSize + 'px';
+            document.getElementById('typo-line-p-val').innerText = pLine;
+
+            // Apply
+            const h1 = document.getElementById('typo-h1');
+            const p = document.getElementById('typo-p');
+
+            h1.style.fontFamily = h1Font.includes('sans') ? 'Inter, sans-serif' : (h1Font.includes('serif') ? 'Merriweather, serif' : 'monospace');
+            if(h1Font.includes('Arial')) h1.style.fontFamily = 'Arial, sans-serif';
+            if(h1Font.includes('Times')) h1.style.fontFamily = 'Times New Roman, serif';
+            h1.style.fontSize = h1Size + 'px';
+            h1.style.fontWeight = h1Weight;
+            h1.style.letterSpacing = h1Space + 'px';
+
+            p.style.fontFamily = pFont.includes('sans') ? 'Inter, sans-serif' : (pFont.includes('serif') ? 'Merriweather, serif' : 'monospace');
+            if(pFont.includes('Arial')) p.style.fontFamily = 'Arial, sans-serif';
+            p.style.fontSize = pSize + 'px';
+            p.style.lineHeight = pLine;
+        }
+
+        function copyTypographyCSS() {
+             const h1Font = document.getElementById('typo-font-h1').value;
+             const css = `
+/* Typography */
+h1 {
+    font-family: ${h1Font.split(',')[0]};
+    font-size: ${document.getElementById('typo-size-h1').value}px;
+    font-weight: ${document.getElementById('typo-weight-h1').value};
+    letter-spacing: ${document.getElementById('typo-space-h1').value}px;
+}
+p {
+    font-family: ${document.getElementById('typo-font-p').value.split(',')[0]};
+    font-size: ${document.getElementById('typo-size-p').value}px;
+    line-height: ${document.getElementById('typo-line-p').value};
+}
+             `.trim();
+             copyToClipboard(css, "CSS de Tipografia Copiado!");
+        }
+
+        // --- TRANSFORM LOGIC ---
+        function updateTransformUI() {
+             // Values are pulled in updateDynamicStyles() and applied to CSS directly to handle hover state
+             document.getElementById('trans-dur-val').innerText = document.getElementById('trans-dur').value + 's';
+             updateDynamicStyles();
+        }
+
+        function copyTransformCSS() {
+            const tRotate = document.getElementById('trans-rotate').value;
+            const tScale = document.getElementById('trans-scale').value;
+            const tX = document.getElementById('trans-x').value;
+            const tY = document.getElementById('trans-y').value;
+            const tSkew = document.getElementById('trans-skew').value;
+            const tDur = document.getElementById('trans-dur').value;
+            const tTiming = document.getElementById('trans-timing').value;
+            
+            const css = `
+.element {
+    transition: transform ${tDur}s ${tTiming};
+}
+.element:hover {
+    transform: rotate(${tRotate}deg) scale(${tScale}) translate(${tX}px, ${tY}px) skew(${tSkew}deg);
+}
+            `.trim();
+            copyToClipboard(css, "CSS de Transform Copiado!");
+        }
+
+
+        // --- SCROLLBAR LOGIC ---
+        function updateScrollbarUI() {
+            document.getElementById('scroll-width-val').innerText = document.getElementById('scroll-width').value + 'px';
+            document.getElementById('scroll-radius-val').innerText = document.getElementById('scroll-radius').value + 'px';
+            document.getElementById('scroll-thumb-hex').innerText = document.getElementById('scroll-thumb').value.toUpperCase();
+            document.getElementById('scroll-thumb-dot').style.background = document.getElementById('scroll-thumb').value;
+            document.getElementById('scroll-track-hex').innerText = document.getElementById('scroll-track').value.toUpperCase();
+            document.getElementById('scroll-track-dot').style.background = document.getElementById('scroll-track').value;
+            updateDynamicStyles();
+        }
+        function copyScrollbarCSS() {
+            const sWidth = document.getElementById('scroll-width').value;
+            const sRadius = document.getElementById('scroll-radius').value;
+            const sThumb = document.getElementById('scroll-thumb').value;
+            const sTrack = document.getElementById('scroll-track').value;
+            const css = `/* Webkit Scrollbar */\n::-webkit-scrollbar { width: ${sWidth}px; }\n::-webkit-scrollbar-track { background: ${sTrack}; }\n::-webkit-scrollbar-thumb { background: ${sThumb}; border-radius: ${sRadius}px; }`;
+            copyToClipboard(css, "CSS de Scrollbar Copiado!");
+            document.getElementById('custom-context-menu').style.display = 'none';
+        }
+
+        // --- MENU LOGIC ---
+        function updateMenuUI() {
+            document.getElementById('menu-bg-dot').style.background = document.getElementById('menu-bg').value;
+            document.getElementById('menu-text-dot').style.background = document.getElementById('menu-text').value;
+            document.getElementById('menu-hover-bg-dot').style.background = document.getElementById('menu-hover-bg').value;
+            document.getElementById('menu-hover-text-dot').style.background = document.getElementById('menu-hover-text').value;
+            document.getElementById('menu-border-col-dot').style.background = document.getElementById('menu-border-col').value;
+            document.getElementById('menu-radius-val').innerText = document.getElementById('menu-radius').value + 'px';
+            updateDynamicStyles();
+        }
+
+        function copyMenuCSS() {
+            const mBg = document.getElementById('menu-bg').value;
+            const mText = document.getElementById('menu-text').value;
+            const mHoverBg = document.getElementById('menu-hover-bg').value;
+            const mHoverText = document.getElementById('menu-hover-text').value;
+            const mBorder = document.getElementById('menu-border-col').value;
+            const mRadius = document.getElementById('menu-radius').value;
+            const mShadow = document.getElementById('menu-shadow-check').checked;
+            const css = `
+.context-menu {
+    background-color: ${mBg};
+    color: ${mText};
+    border: 1px solid ${mBorder};
+    border-radius: ${mRadius}px;
+    box-shadow: ${mShadow ? '0 4px 12px rgba(0,0,0,0.15)' : 'none'};
+    display: flex; flex-direction: column; padding: 8px 0;
+}
+.context-menu .item { padding: 8px 16px; cursor: pointer; }
+.context-menu .item:hover { background-color: ${mHoverBg}; color: ${mHoverText}; }
+            `.trim();
+            copyToClipboard(css, "CSS de Menu Copiado!");
+        }
+
+        // --- SCROLLBAR CONTEXT MENU EVENT ---
+        const contextMenu = document.getElementById('custom-context-menu');
+        const scrollTarget = document.getElementById('scrollbar-target');
+        scrollTarget.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            contextMenu.style.left = `${e.pageX}px`;
+            contextMenu.style.top = `${e.pageY}px`;
+            contextMenu.style.display = 'flex';
         });
+        document.addEventListener('click', (e) => { if (!contextMenu.contains(e.target)) contextMenu.style.display = 'none'; });
 
-        // Close logic
-        document.getElementById('css-modal').addEventListener('click', (e) => { if(e.target === document.getElementById('css-modal')) closeCSSModal(); });
-        document.getElementById('ai-modal').addEventListener('click', (e) => { if(e.target === document.getElementById('ai-modal')) closeAIModal(); });
-        document.getElementById('analysis-modal').addEventListener('click', (e) => { if(e.target === document.getElementById('analysis-modal')) closeAnalysisModal(); });
-        document.getElementById('ui-modal').addEventListener('click', (e) => { if(e.target === document.getElementById('ui-modal')) closeUIModal(); });
+        function adjustColor(hex, amount) {
+            let usePound = false; if (hex[0] == "#") { hex = hex.slice(1); usePound = true; }
+            let num = parseInt(hex, 16);
+            let r = (num >> 16) + amount; if (r > 255) r = 255; else if (r < 0) r = 0;
+            let b = ((num >> 8) & 0x00FF) + amount; if (b > 255) b = 255; else if (b < 0) b = 0;
+            let g = (num & 0x0000FF) + amount; if (g > 255) g = 255; else if (g < 0) g = 0;
+            return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16);
+        }
 
-        document.addEventListener('click', (e) => {
-            const menu = document.getElementById('vision-menu');
-            const btn = document.querySelector('[onclick="toggleVisionMenu()"]');
-            if (!menu.contains(e.target) && !btn.contains(e.target) && menu.classList.contains('open')) {
-                menu.classList.remove('open');
-            }
-        });
+        // --- RANDOMIZER & RESET ---
+        function randomizeScrollbar() {
+            document.getElementById('scroll-width').value = Math.floor(Math.random() * 20) + 6;
+            document.getElementById('scroll-radius').value = Math.floor(Math.random() * 20);
+            const randColor = () => HSLToHex(Math.random()*360, 70, 50);
+            document.getElementById('scroll-thumb').value = randColor();
+            updateScrollbarUI();
+            document.getElementById('custom-context-menu').style.display = 'none';
+        }
+        function resetScrollbar() {
+            document.getElementById('scroll-width').value = 12; document.getElementById('scroll-radius').value = 10;
+            document.getElementById('scroll-thumb').value = "#4f46e5"; document.getElementById('scroll-track').value = "#f1f1f1";
+            updateScrollbarUI();
+            document.getElementById('custom-context-menu').style.display = 'none';
+        }
 
-        // Start
-        initPalette();
-        initGradient();
-        updateShadowUI();
-        updateBorderUI();
+        function closeCSSModal() { document.getElementById('css-modal').classList.remove('open'); }
+        function copyCSSBlock() { copyToClipboard(document.getElementById('css-code-block').textContent, "Código Copiado!"); }
+        function openAIModal() { document.getElementById('ai-modal').classList.add('open'); }
+        function closeAIModal() { document.getElementById('ai-modal').classList.remove('open'); }
+        function openUIModal() { document.getElementById('ui-modal').classList.add('open'); }
+        function closeUIModal() { document.getElementById('ui-modal').classList.remove('open'); }
+        function closeAnalysisModal() { document.getElementById('analysis-modal').classList.remove('open'); }
+
+        // --- GRADIENT ---
+        function randomGradient() {
+            gradientState.c1 = HSLToHex(Math.random()*360, 80, 60); gradientState.c2 = HSLToHex(Math.random()*360, 80, 60); gradientState.angle = Math.floor(Math.random() * 360);
+            updateGradientUI();
+        }
+        function updateGradientFromInput() {
+            gradientState.c1 = document.getElementById('input-grad-1').value; gradientState.c2 = document.getElementById('input-grad-2').value; gradientState.angle = document.getElementById('grad-angle').value;
+            updateGradientUI();
+        }
+        function updateGradientUI() {
+            document.getElementById('input-grad-1').value = gradientState.c1; document.getElementById('dot-1').style.backgroundColor = gradientState.c1; document.getElementById('grad-hex-1').textContent = gradientState.c1.toUpperCase();
+            document.getElementById('input-grad-2').value = gradientState.c2; document.getElementById('dot-2').style.backgroundColor = gradientState.c2; document.getElementById('grad-hex-2').textContent = gradientState.c2.toUpperCase();
+            document.getElementById('grad-angle').value = gradientState.angle; document.getElementById('angle-val').textContent = gradientState.angle + '°';
+            document.getElementById('gradient-preview').style.background = `linear-gradient(${gradientState.angle}deg, ${gradientState.c1}, ${gradientState.c2})`;
+        }
+        function copyGradientCSS() { copyToClipboard(`background: linear-gradient(${gradientState.angle}deg, ${gradientState.c1}, ${gradientState.c2});`, "CSS Copiado!"); }
+        
+        // --- UI GEN STUBS ---
+        function generateLocalUI() {
+             const type = document.getElementById('ui-component-type').value;
+             const c = paletteColors; 
+             const textC = c.map(hex => getLuminance(hex) > 0.5 ? '#111827' : '#FFFFFF');
+             let html = "";
+             if (type === 'hero') html = `<div class="w-full p-8 md:p-12 rounded-xl flex flex-col items-center text-center gap-6" style="background:${c[0]};color:${textC[0]}"><h1 class="text-4xl font-bold">Título Principal</h1><button style="background:${c[4]};color:${textC[4]}" class="px-6 py-3 rounded-lg font-bold shadow-lg">Ação</button></div>`;
+             else if (type === 'card') html = `<div class="max-w-sm mx-auto rounded-2xl shadow-xl overflow-hidden" style="background:${c[0]}"><div style="height:150px;background:${c[1]}"></div><div class="p-6"><h3 style="color:${c[4]}" class="text-xl font-bold">Item</h3></div></div>`;
+             document.getElementById('ui-preview-container').innerHTML = html;
+        }
+
+        function toggleVisionMenu() { document.getElementById('vision-menu').classList.toggle('open'); }
+        function setVisionMode(mode) { document.body.className = mode !== 'normal' ? `filter-${mode}` : ''; document.getElementById('vision-menu').classList.remove('open'); }
+        function analyzePalette() { document.getElementById('analysis-modal').classList.add('open'); document.getElementById('analysis-result').innerHTML = "<p class='text-center p-4'>Análise Básica: Cores harmoniosas geradas.</p>"; }
+
+        // Init
+        initPalette(); randomGradient(); updateShadowUI(); updateBorderUI(); updateScrollbarUI(); updateMenuUI(); updateTypographyUI(); updateTransformUI();
     </script>
 </body>
 </html>
